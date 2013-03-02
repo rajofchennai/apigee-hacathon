@@ -1,3 +1,11 @@
+GIT
+  remote: git://github.com/taf2/speech2text.git
+  revision: 4d28a463f08fa3be675e3e8225b2d2c5c449ff19
+  specs:
+    speech2text (0.3.6)
+      curb
+      json
+
 GEM
   remote: http://rubygems.org/
   specs:
@@ -88,9 +96,6 @@ GEM
       railties (~> 3.2.0)
       sass (>= 3.1.10)
       tilt (~> 1.3)
-    speech2text (0.3.6)
-      curb
-      json
     sprockets (2.2.2)
       hike (~> 1.2)
       multi_json (~> 1.0)
@@ -119,7 +124,7 @@ DEPENDENCIES
   rails (= 3.2.12)
   rubyfish (~> 0.0.5)
   sass-rails (~> 3.2.3)
-  speech2text (~> 0.3.6)
+  speech2text!
   sqlite3
   uglifier (>= 1.0.3)
   usergrid_iron (~> 0.9.0)
