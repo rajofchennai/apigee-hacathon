@@ -17,6 +17,8 @@ class HomeController < ApplicationController
 
       if !@user || @user.city.nil?   # new user
         session[:user_state] = "session_city"
+        session[:city_choices] = []
+        session[:city_retry_count] = 0
         @user = User.create!(:cid => params['cid'])
         circle = params['circle']
         cities_hash = CIRCLES_LIST[circle]
@@ -28,6 +30,7 @@ class HomeController < ApplicationController
         else
           @play_text = @play_text + "press 1 for delhi. press 2 for kolkata.
                             press 4 for bangalore or press 7 for chennai"
+          session[:city_choices] = [1, 2, 4, 7]
         end
 
         @play_text = @play_text + " and press #"
@@ -97,18 +100,26 @@ class HomeController < ApplicationController
         end
       end
     when params && params['event'] && params['event'].downcase == 'gotdtmf'    # user has entered his city preference
-      city_id = params['data']
-      city = CITIES_AUX[city_id] || 'Bangalore'
-      session[:city] = city
-      session[:city_id] = city_id
+      if (params['data'] == "" || !session[:city_choices].include?(parama['data'])) && session[:city_retry_count] == 0
+        session[:city_retry_count] = 1
+        @play_text = "Invalid city code. Please enter again."
+        respond_to do |format|
+          format.any(:xml, :html) {render :template => 'home/retry_asking_city.xml', :layout => nil, :formats => [:xml]}
+        end
+      else
+        city_id = params['data']
+        city = CITIES_AUX[city_id] || 'Bangalore'
+        session[:city] = city
+        session[:city_id] = city_id
 
-      @user = User.find_by_cid(params['cid'])
-      @user.update_attributes!(:city => city, :city_id => city_id)
+        @user = User.find_by_cid(params['cid'])
+        @user.update_attributes!(:city => city, :city_id => city_id)
 
-      session[:retry_count] = 0
-      @play_text = "Please tell us your cuisine preference to search for restaurants after the beep"
-      respond_to do |format|
-        format.any(:xml, :html) {render :template => 'home/ask_cuisine.xml', :layout => nil, :formats => [:xml]}
+        session[:retry_count] = 0
+        @play_text = "Please tell us your cuisine preference to search for restaurants after the beep"
+        respond_to do |format|
+          format.any(:xml, :html) {render :template => 'home/ask_cuisine.xml', :layout => nil, :formats => [:xml]}
+        end
       end
     else
       respond_to do |format|
