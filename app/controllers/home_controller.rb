@@ -40,6 +40,8 @@ class HomeController < ApplicationController
     when params && params['event'].downcase == 'record'     # user has entered his locality/cuisine preference
       text = get_text_from_record(params['event'])
       session[:cuisine] = text
+
+
     when params && params['event'].downcase == 'gotdtmf'    # user has entered his city preference
       city_code = params['data']
       city = 'bangalore'
@@ -51,6 +53,10 @@ class HomeController < ApplicationController
       @play_text = "Please enter your cuisine to search for restaurants"
       respond_to do |format|
         format.any(:xml, :html) {render :template => 'home/ask_cuisine.xml', :layout => nil, :formats => [:xml]}
+      end
+    else
+      respond_to do |format|
+        format.any(:xml, :html) {render :template => 'home/hangup.xml', :layout => nil, :formats => [:xml]}
       end
     end
 
