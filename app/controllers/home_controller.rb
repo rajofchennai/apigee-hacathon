@@ -139,18 +139,18 @@ class HomeController < ApplicationController
 
   def get_cuisine_from_text(texts, city_id)
     cuisine_json = RestClient.get "https://api.zomato.com/v1/cuisines.json?city_id=#{city_id}", {"X-Zomato-API-Key" => 'bee347dd88444d09a2b970adcfcb0a0a'}
-    cuisines =  JSON.parse(cuisine_json)['cuisines'].collect {|cuisine| cuisine['cuisine']['cuisine_name']}
+    cuisines =  JSON.parse(cuisine_json)['cuisines'].collect {|cuisine| cuisine['cuisine']}
     Rails.logger.info cuisines.inspect
     texts.each do |text|
       cuisines.each do |cuisine|
-        if RubyFish::DoubleMetaphone.phonetic_code(text)[0] == RubyFish::DoubleMetaphone.phonetic_code(cuisine)[0]
+        if RubyFish::DoubleMetaphone.phonetic_code(text)[0] == RubyFish::DoubleMetaphone.phonetic_code(cuisine['cuisine_name'])[0]
           Rails.logger.info text
           Rails.logger.info cuisine
           return cuisine
         end
       end
     end
-    return ""
+    return {:cuisine_id => "", :cuisine_name => ""}
   end
 
   def get_location_from_text(texts, city_id)
