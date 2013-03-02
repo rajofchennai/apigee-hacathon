@@ -58,8 +58,9 @@ class HomeController < ApplicationController
           search_keywords = "Indiranagar Mexican"
         end
 
+        Rails.logger.info "search words = #{search_keywords}"
         hotel_details = Zomato.search_restaturants(text, session[:city_id])
-        @play_text = get_formatted_text(hotel_details)
+        @play_text, @sms_message = get_formatted_text(hotel_details)
         # send_sms(@play_text)
 
         respond_to do |format|
@@ -184,13 +185,17 @@ class HomeController < ApplicationController
     end
 
     reply_message = "You can go to "
-    results.each do |result|
+    sms = ""
+    results.each_with_index do |result, index|
       result = result["result"]
       reply_message = reply_message + "#{result['name']} in #{result['locality']} or"
+
+      sms = sms + "#{index+1}) #{result['name']}: #{result['address']}\n"
     end
 
     reply_message = reply_message[0...-2]  # remove "or" from the end of sentence
     reply_message = reply_message + ". We will be sending you all the details through sms shortly. Thank you."
+    reply_message, sms
   end
 
   def subsequence(s1, s2)
