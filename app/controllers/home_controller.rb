@@ -46,7 +46,7 @@ class HomeController < ApplicationController
         respond_to do |format|
           format.any(:xml, :html) {render :template => 'home/send_sms.xml', :layout => nil, :formats => [:xml]}
         end
-      else if session[:user_state] == "session_cuisine"
+      elsif session[:user_state] == "session_cuisine"
         session[:user_state] = "session_locality"    # change state to locality and get cuisine from current record
         text = get_text_from_record(params['data'])
         text = get_cuisine_from_text(text, 4)
@@ -59,7 +59,6 @@ class HomeController < ApplicationController
 
       end
     when params && params['event'] && params['event'].downcase == 'gotdtmf'    # user has entered his city preference
-      city_code = params['data']
       city = 'bangalore'
       session[:city] = city
 
