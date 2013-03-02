@@ -1,4 +1,5 @@
 require "#{Rails.root}/lib/circles_aux.rb"
+require "#{Rails.root}/lib/cities_aux.rb"
 require 'speech'
 
 class HomeController < ApplicationController
@@ -43,7 +44,7 @@ class HomeController < ApplicationController
     when params && params['event'] && params['event'].downcase == 'record'     # user has entered his locality/cuisine preference
       if session[:user_state] == "session_locality"
         @play_text = "We will be sending you the list of restaurants through sms shortly"
-        # hotel_details = Zomato.search_restaturants(text, 4)
+        # hotel_details = Zomato.search_restaturants(text, session[:city_id])
         # @message = get_formatted_text(hotel_details)
         send_sms(@play_text)
       else
@@ -52,7 +53,8 @@ class HomeController < ApplicationController
         #TODO: Make this async
         text = get_text_from_record(params['data'])
         puts "detected cuisines #{text.inspect}"
-        text = get_cuisine_from_text(text, 4)
+        text = get_cuisine_from_text(text, session[:city_id])
+
         Rails.logger.info "CUISINES = #{text}"
         session[:cuisine] = text
         @play_text = "Please tell us your locality preference to search for restaurants"
@@ -62,8 +64,10 @@ class HomeController < ApplicationController
         end
       end
     when params && params['event'] && params['event'].downcase == 'gotdtmf'    # user has entered his city preference
-      city = 'bangalore'
+      city_id = params['data']
+      city = CITIES_AUX[city_id] || 'Bangalore'
       session[:city] = city
+      session[:city_id] = city_id
 
       @user = User.find_by_cid(params['cid'])
       @user.update_attributes!(:city => city)
