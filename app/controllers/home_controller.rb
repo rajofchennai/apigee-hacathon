@@ -53,6 +53,7 @@ class HomeController < ApplicationController
         text = get_text_from_record(params['data'])
         text = get_cuisine_from_text(text, 4)
 
+        Rails.logger.info "CUISINES = #{text}"
         session[:cuisine] = text
         @play_text = "Please tell us your locality preference to search for restaurants"
 
