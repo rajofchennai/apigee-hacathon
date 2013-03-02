@@ -146,7 +146,7 @@ class HomeController < ApplicationController
     locations_json = RestClient.get "https://api.zomato.com/v1/subzones.json?city_id=#{city_id}", {"X-Zomato-API-Key" => 'bee347dd88444d09a2b970adcfcb0a0a'}
     locations = JSON.parse(locations_json)['subzones'].collect {|location| location['subzone']['name']}
     max_length = 0
-    best_location = nil
+    best_location = ""
     texts.each do |text|
       locations.each do |location|
         length = subsequence(RubyFish::DoubleMetaphone.phonetic_code(text)[0], RubyFish::DoubleMetaphone.phonetic_code(location)[0])
