@@ -55,7 +55,7 @@ class HomeController < ApplicationController
 
         search_keywords = search_keywords + " " + text
 
-        if search_keywords == ""
+        if search_keywords == " "
           search_keywords = "Indiranagar Mexican"
         end
 
