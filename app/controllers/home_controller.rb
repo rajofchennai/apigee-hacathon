@@ -62,7 +62,6 @@ class HomeController < ApplicationController
         end
       end
     when params && params['event'] && params['event'].downcase == 'gotdtmf'    # user has entered his city preference
-      city_code = params['data']
       city = 'bangalore'
       session[:city] = city
 
