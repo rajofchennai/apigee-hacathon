@@ -53,7 +53,7 @@ class HomeController < ApplicationController
         text = get_text_from_record(params['data'])
         text = get_location_from_text(text, session[:city_id])
 
-        search_keywords = search_keywords + text
+        search_keywords = search_keywords + " " + text
 
         if search_keywords == ""
           search_keywords = "Indiranagar Mexican"
@@ -64,7 +64,8 @@ class HomeController < ApplicationController
         @play_text, @sms_message = get_formatted_text(hotel_details)
         # send_sms(@play_text)
 
-        MESSAGE_QUEUE.push(:phone_no => session[:cid], :message => URI.encode(@sms_message))
+        Rails.logger.info "sms message = #{@sms_message}"
+        MESSAGE_QUEUE.push(:phone_no => params['cid'], :message => URI.encode(@sms_message))
         respond_to do |format|
           format.any(:xml, :html) {render :template => 'home/play_results.xml', :layout => nil, :formats => [:xml]}
         end
