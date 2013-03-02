@@ -36,6 +36,7 @@ class HomeController < ApplicationController
         end
       else    # old user
         session[:user_state] = "session_cuisine"
+        session[:city_id] = @user.city_id || "4"
         @play_text = "Please tell us your cuisine preference to search for restaurants"
         respond_to do |format|
           format.any(:xml, :html) {render :template => 'home/ask_cuisine.xml', :layout => nil, :formats => [:xml]}
@@ -69,7 +70,7 @@ class HomeController < ApplicationController
       session[:city_id] = city_id
 
       @user = User.find_by_cid(params['cid'])
-      @user.update_attributes!(:city => city)
+      @user.update_attributes!(:city => city, :city_id => city_id)
 
       @play_text = "Please tell us your cuisine preference to search for restaurants"
       respond_to do |format|
