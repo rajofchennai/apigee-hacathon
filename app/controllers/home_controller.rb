@@ -39,10 +39,20 @@ class HomeController < ApplicationController
         end
       end
     when params && params['event'].downcase == 'record'     # user has entered his locality/cuisine preference
-      text = get_text_from_record(params['event'])
+      Rails.logger.info "SESSION = #{session.inspect}"
+      text = get_text_from_record(params['data'])
+      text = get_cuisine_from_text(text, 4)
+
       session[:cuisine] = text
 
+      hotel_details = Zomato.search_restaturants(text, 4)
+Rails.logger.info hotel_details.inspect
+      @message = get_formatted_text(hotel_details)
+      @play_text = "We will be sending you the list of restaurants through sms shortly"
 
+      respond_to do |format|
+        format.any(:xml, :html) {render :template => 'home/send_sms.xml', :layout => nil, :formats => [:xml]}
+      end
     when params && params['event'].downcase == 'gotdtmf'    # user has entered his city preference
       city_code = params['data']
       city = 'bangalore'
@@ -51,7 +61,7 @@ class HomeController < ApplicationController
       @user = User.find_by_cid(params['cid'])
       @user.update_attributes!(:city => city)
 
-      @play_text = "Please enter your cuisine to search for restaurants"
+      @play_text = "Please tell us your cuisine preference to search for restaurants"
       respond_to do |format|
         format.any(:xml, :html) {render :template => 'home/ask_cuisine.xml', :layout => nil, :formats => [:xml]}
       end
@@ -61,9 +71,6 @@ class HomeController < ApplicationController
       end
     end
 
-#     respond_to do |format|
-#       format.any(:xml, :html) {render :template => 'home/index.xml', :layout => nil, :formats => [:xml]}
-#     end
   end
 
   def transcribe
@@ -94,9 +101,9 @@ class HomeController < ApplicationController
 
   def get_text_from_record(record)
     `wget #{record}`
-    audio = Speech::AudioToText.new(record)
+    audio = Speech::AudioToText.new(record.split("/").last)
     audio.to_text
-    audio.hypotheses
+    audio.captured_json["hypotheses"].collect {|i| i[0] }
   end
 
   def send_sms(text)
@@ -104,5 +111,8 @@ class HomeController < ApplicationController
     respond_to do |format|
       format.any(:xml, :html) {render :template => 'home/send_sms.xml', :layout => nil, :formats => [:xml]}
     end
+  end
+
+  def get_formatted_text(json_resp)
   end
 end
