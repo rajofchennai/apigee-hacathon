@@ -43,7 +43,7 @@ class HomeController < ApplicationController
       end
     when params && params['event'] && params['event'].downcase == 'record'     # user has entered his locality/cuisine preference
       if session[:user_state] == "session_locality"
-        @play_text = "We will be sending you the list of restaurants through sms shortly"
+        @play_text = "We will be sending you the list of restaurants through sms shortly. Thank you."
         # hotel_details = Zomato.search_restaturants(text, session[:city_id])
         # @message = get_formatted_text(hotel_details)
         send_sms(@play_text)
