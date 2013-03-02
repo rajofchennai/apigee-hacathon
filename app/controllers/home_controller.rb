@@ -38,7 +38,7 @@ class HomeController < ApplicationController
         session[:user_state] = "session_cuisine"
         session[:city_id] = @user.city_id || "4"
         session[:retry_count] = 0
-        @play_text = "Please tell us your cuisine preference to search for restaurants"
+        @play_text = "Please tell us your cuisine preference to search for restaurants after the beep"
         respond_to do |format|
           format.any(:xml, :html) {render :template => 'home/ask_cuisine.xml', :layout => nil, :formats => [:xml]}
         end
@@ -50,8 +50,6 @@ class HomeController < ApplicationController
         # @message = get_formatted_text(hotel_details)
         send_sms(@play_text)
       else
-        session[:user_state] = "session_locality"    # change state to locality and get cuisine from current record
-
         #TODO: Make this async
         text = get_text_from_record(params['data'])
         puts "detected cuisines #{text.inspect}"
@@ -67,6 +65,7 @@ class HomeController < ApplicationController
             format.any(:xml, :html) {render :template => 'home/ask_cuisine.xml', :layout => nil, :formats => [:xml]}
           end
         else
+          session[:user_state] = "session_locality"    # change state to locality and get cuisine from current record
           session[:cuisine] = text
           @play_text = "Please tell us your locality preference to search for restaurants after the beep"
 
