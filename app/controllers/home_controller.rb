@@ -60,6 +60,8 @@ class HomeController < ApplicationController
         # Retry one more time if cuisines is blank
         if text == "" && session[:retry_count] == 0
           session[:retry_count] = 1
+          file_name = params['data'].split("/").last
+          File.delete(file_name) rescue nil
           @play_text = "Sorry we were unable to detect your cuisine preference. Please try again"
           respond_to do |format|
             format.any(:xml, :html) {render :template => 'home/ask_cuisine.xml', :layout => nil, :formats => [:xml]}
