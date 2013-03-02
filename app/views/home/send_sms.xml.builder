@@ -1,4 +1,5 @@
 xml.instruct!
 xml.tag!("Response", "sid" => @sid) do
-  xml.tag!("sendsms", @text, "to" => @cid)
+  xml.playtext(@play_text)
+  xml.tag!("sendsms", @message, "to" => @cid)
 end
