@@ -86,7 +86,7 @@ class HomeController < ApplicationController
   def transcribe
     @sid  = params[:sid]
     @cid  = params[:cid]
-    puts params.inspect
+    render :json =>  params
   end
 
   private
@@ -102,6 +102,23 @@ class HomeController < ApplicationController
       end
     end
     return ""
+  end
+
+  def get_location_from_text(texts, city_id)
+    locations_json = RestClient.get "https://api.zomato.com/v1/subzones.json?city_id=#{city_id}", {"X-Zomato-API-Key" => 'bee347dd88444d09a2b970adcfcb0a0a'}
+    locations = JSON.parse(locations_json)['subzones'].collect {|location| location['subzone']['name']}
+    max_length = 0
+    best_location = nil
+    texts.each do |text|
+      locations.each do |location|
+        length = subsequence(RubyFish::DoubleMetaphone.phonetic_code(text)[0], RubyFish::DoubleMetaphone.phonetic_code(location)[0])
+        if length > max_length
+          max_length = length
+          best_location = location
+        end
+      end
+    end
+    best_location
   end
 
   def get_text_from_record(record)
@@ -123,5 +140,32 @@ class HomeController < ApplicationController
   end
 
   def get_formatted_text(json_resp)
+  end
+
+  def subsequence(s1, s2)
+    return 0 if s1.empty? || s2.empty?
+    num=Array.new(s1.size){Array.new(s2.size)}
+    s1.scan(/./).each_with_index{|letter1,i|
+      s2.scan(/./).each_with_index{|letter2,j|
+        if s1[i]==s2[j]
+          if i==0||j==0
+             num[i][j] = 1
+          else
+             num[i][j]  = 1 + num[i - 1][ j - 1]
+          end
+        else
+          if i==0 && j==0
+             num[i][j] = 0
+          elsif i==0 &&  j!=0  #First ith element
+             num[i][j] = [0,  num[i][j - 1]].max
+          elsif j==0 && i!=0  #First jth element
+              num[i][j] = [0, num[i - 1][j]].max
+          elsif i != 0 && j!= 0
+            num[i][j] = [num[i - 1][j], num[i][j - 1]].max
+          end
+        end
+      }
+    }
+    num[s1.length - 1][s2.length - 1]
   end
 end
