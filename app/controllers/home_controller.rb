@@ -1,6 +1,7 @@
 require "#{Rails.root}/lib/circles_aux.rb"
 require "#{Rails.root}/lib/cities_aux.rb"
 require 'speech'
+require 'uri'
 
 class HomeController < ApplicationController
 
@@ -16,6 +17,8 @@ class HomeController < ApplicationController
 
       if !@user || @user.city.nil?   # new user
         session[:user_state] = "session_city"
+        session[:city_choices] = []
+        session[:city_retry_count] = 0
         @user = User.create!(:cid => params['cid'])
         circle = params['circle']
         cities_hash = CIRCLES_LIST[circle]
@@ -27,6 +30,7 @@ class HomeController < ApplicationController
         else
           @play_text = @play_text + "press 1 for delhi. press 2 for kolkata.
                             press 4 for bangalore or press 7 for chennai"
+          session[:city_choices] = [1, 2, 4, 7]
         end
 
         @play_text = @play_text + " and press #"
@@ -52,9 +56,9 @@ class HomeController < ApplicationController
         text = get_text_from_record(params['data'])
         text = get_location_from_text(text, session[:city_id])
 
-        search_keywords = search_keywords + text
+        search_keywords = search_keywords + " " + text
 
-        if search_keywords == ""
+        if search_keywords == " "
           search_keywords = "Indiranagar Mexican"
         end
 
@@ -63,6 +67,8 @@ class HomeController < ApplicationController
         @play_text, @sms_message = get_formatted_text(hotel_details)
         # send_sms(@play_text)
 
+        Rails.logger.info "sms message = #{@sms_message}"
+        MESSAGE_QUEUE.push(:phone_no => params['cid'], :message => URI.encode(@sms_message))
         respond_to do |format|
           format.any(:xml, :html) {render :template => 'home/play_results.xml', :layout => nil, :formats => [:xml]}
         end
@@ -94,18 +100,26 @@ class HomeController < ApplicationController
         end
       end
     when params && params['event'] && params['event'].downcase == 'gotdtmf'    # user has entered his city preference
-      city_id = params['data']
-      city = CITIES_AUX[city_id] || 'Bangalore'
-      session[:city] = city
-      session[:city_id] = city_id
+      if (params['data'] == "" || !session[:city_choices].include?(parama['data'])) && session[:city_retry_count] == 0
+        session[:city_retry_count] = 1
+        @play_text = "Invalid city code. Please enter again."
+        respond_to do |format|
+          format.any(:xml, :html) {render :template => 'home/retry_asking_city.xml', :layout => nil, :formats => [:xml]}
+        end
+      else
+        city_id = params['data']
+        city = CITIES_AUX[city_id] || 'Bangalore'
+        session[:city] = city
+        session[:city_id] = city_id
 
-      @user = User.find_by_cid(params['cid'])
-      @user.update_attributes!(:city => city, :city_id => city_id)
+        @user = User.find_by_cid(params['cid'])
+        @user.update_attributes!(:city => city, :city_id => city_id)
 
-      session[:retry_count] = 0
-      @play_text = "Please tell us your cuisine preference to search for restaurants after the beep"
-      respond_to do |format|
-        format.any(:xml, :html) {render :template => 'home/ask_cuisine.xml', :layout => nil, :formats => [:xml]}
+        session[:retry_count] = 0
+        @play_text = "Please tell us your cuisine preference to search for restaurants after the beep"
+        respond_to do |format|
+          format.any(:xml, :html) {render :template => 'home/ask_cuisine.xml', :layout => nil, :formats => [:xml]}
+        end
       end
     else
       respond_to do |format|
@@ -143,7 +157,7 @@ class HomeController < ApplicationController
     locations_json = RestClient.get "https://api.zomato.com/v1/subzones.json?city_id=#{city_id}", {"X-Zomato-API-Key" => 'bee347dd88444d09a2b970adcfcb0a0a'}
     locations = JSON.parse(locations_json)['subzones'].collect {|location| location['subzone']['name']}
     max_length = 0
-    best_location = nil
+    best_location = ""
     texts.each do |text|
       locations.each do |location|
         length = subsequence(RubyFish::DoubleMetaphone.phonetic_code(text)[0], RubyFish::DoubleMetaphone.phonetic_code(location)[0])
@@ -195,7 +209,7 @@ class HomeController < ApplicationController
 
     reply_message = reply_message[0...-2]  # remove "or" from the end of sentence
     reply_message = reply_message + ". We will be sending you all the details through sms shortly. Thank you."
-    reply_message, sms
+    return reply_message, sms
   end
 
   def subsequence(s1, s2)
