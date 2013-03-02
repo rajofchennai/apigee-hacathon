@@ -50,7 +50,7 @@ class HomeController < ApplicationController
       @user = User.find_by_cid(params['cid'])
       @user.update_attributes!(:city => city)
 
-      @play_text = "Please enter your cuisine to search for restaurants"
+      @play_text = "Please tell us your cuisine preference to search for restaurants"
       respond_to do |format|
         format.any(:xml, :html) {render :template => 'home/ask_cuisine.xml', :layout => nil, :formats => [:xml]}
       end
