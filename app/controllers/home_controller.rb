@@ -146,6 +146,7 @@ class HomeController < ApplicationController
     end
     audio = Speech::AudioToText.new(file_name)
     audio.to_text
+    Rails.logger.info audio.inspect
     audio.captured_json["hypotheses"].collect {|i| i[0] }
   end
 
