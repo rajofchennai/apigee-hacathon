@@ -61,4 +61,11 @@ class HomeController < ApplicationController
 
   def get_text_from_record(record)
   end
+
+  def send_sms(text)
+    @text = text
+    respond_to do |format|
+      format.any(:xml, :html) {render :template => 'home/send_sms.xml', :layout => nil, :forma  ts => [:xml]}
+    end
+  end
 end
