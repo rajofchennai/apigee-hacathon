@@ -1,3 +1,3 @@
 class User < ActiveRecord::Base
-  attr_accessible :cid
+  attr_accessible :cid, :city
 end
