@@ -11,13 +11,14 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130301175459) do
+ActiveRecord::Schema.define(:version => 20130302113535) do
 
   create_table "users", :force => true do |t|
     t.string   "cid"
     t.string   "city"
     t.datetime "created_at", :null => false
     t.datetime "updated_at", :null => false
+    t.string   "city_id"
   end
 
   add_index "users", ["cid"], :name => "index_users_on_cid"
