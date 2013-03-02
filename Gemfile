@@ -21,7 +21,9 @@ group :assets do
 end
 
 gem 'jquery-rails'
-
+gem "speech2text", "~> 0.3.6"
+gem "rubyfish", "~> 0.0.5"
+gem "usergrid_iron", "~> 0.9.0"
 # To use ActiveModel has_secure_password
 # gem 'bcrypt-ruby', '~> 3.0.0'
 
