@@ -197,7 +197,7 @@ class HomeController < ApplicationController
 
     reply_message = reply_message[0...-2]  # remove "or" from the end of sentence
     reply_message = reply_message + ". We will be sending you all the details through sms shortly. Thank you."
-    reply_message, sms
+    return reply_message, sms
   end
 
   def subsequence(s1, s2)
