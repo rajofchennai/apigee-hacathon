@@ -4,15 +4,15 @@ class HomeController < ApplicationController
 
   def index
     @sid = params['sid']
+    @cid = params['cid']
 
     case
     # new call
     when params && params['event'].downcase == "newcall"
       session[:sid] = params['sid']
-      @cid = params['cid']
       @user = User.find_by_cid(@cid)
 
-      if !@user    # new user
+      if !@user || @user.city.nil?   # new user
         @user = User.create!(:cid => params['cid'])
         circle = params['circle']
         cities_hash = CIRCLES_LIST[circle]
@@ -22,9 +22,11 @@ class HomeController < ApplicationController
             @play_text = @play_text + "press #{value} for #{key}"
           end
         else
-          @play_text = "press 1 for delhi press 2 for kolkata press 4 for bangalore
-                        or press 7 for chennai"
+          @play_text = @play_text +"press 1 for delhi press 2 for kolkata
+                            press 4 for bangalore or press 7 for chennai"
         end
+
+        @play_text = @play_text + " and press #"
 
         respond_to do |format|
           format.any(:xml, :html) {render :template => 'home/ask_city.xml', :layout => nil, :formats => [:xml]}
@@ -35,7 +37,7 @@ class HomeController < ApplicationController
           format.any(:xml, :html) {render :template => 'home/ask_cuisine.xml', :layout => nil, :formats => [:xml]}
         end
       end
-    when params && params['event'].downcase == 'record'     # call in session
+    when params && params['event'].downcase == 'record'     # user has entered his locality/cuisine preference
       text = get_text_from_record(params['event'])
       session[:cuisine] = text
     when params && params['event'].downcase == 'gotdtmf'    # user has entered his city preference
