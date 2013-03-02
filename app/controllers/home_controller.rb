@@ -37,6 +37,7 @@ class HomeController < ApplicationController
       else    # old user
         session[:user_state] = "session_cuisine"
         session[:city_id] = @user.city_id || "4"
+        session[:retry_count] = 0
         @play_text = "Please tell us your cuisine preference to search for restaurants"
         respond_to do |format|
           format.any(:xml, :html) {render :template => 'home/ask_cuisine.xml', :layout => nil, :formats => [:xml]}
@@ -57,11 +58,21 @@ class HomeController < ApplicationController
         text = get_cuisine_from_text(text, session[:city_id])
 
         Rails.logger.info "CUISINES = #{text}"
-        session[:cuisine] = text
-        @play_text = "Please tell us your locality preference to search for restaurants"
 
-        respond_to do |format|
-          format.any(:xml, :html) {render :template => 'home/ask_locality.xml', :layout => nil, :formats => [:xml]}
+        # Retry one more time if cuisines is blank
+        if text == "" && session[:retry_count] == 0
+          session[:retry_count] = 1
+          @play_text = "Sorry we were unable to detect your cuisine preference. Please try again"
+          respond_to do |format|
+            format.any(:xml, :html) {render :template => 'home/ask_cuisine.xml', :layout => nil, :formats => [:xml]}
+          end
+        else
+          session[:cuisine] = text
+          @play_text = "Please tell us your locality preference to search for restaurants after the beep"
+
+          respond_to do |format|
+            format.any(:xml, :html) {render :template => 'home/ask_locality.xml', :layout => nil, :formats => [:xml]}
+          end
         end
       end
     when params && params['event'] && params['event'].downcase == 'gotdtmf'    # user has entered his city preference
@@ -73,7 +84,8 @@ class HomeController < ApplicationController
       @user = User.find_by_cid(params['cid'])
       @user.update_attributes!(:city => city, :city_id => city_id)
 
-      @play_text = "Please tell us your cuisine preference to search for restaurants"
+      session[:retry_count] = 0
+      @play_text = "Please tell us your cuisine preference to search for restaurants after the beep"
       respond_to do |format|
         format.any(:xml, :html) {render :template => 'home/ask_cuisine.xml', :layout => nil, :formats => [:xml]}
       end
