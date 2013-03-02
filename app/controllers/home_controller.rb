@@ -6,14 +6,16 @@ class HomeController < ApplicationController
   def index
     @sid = params['sid']
     @cid = params['cid']
+    session[:user_state] = nil
 
     case
     # new call
-    when params && params['event'].downcase == "newcall"
+    when params && params['event'] && params['event'].downcase == "newcall"
       session[:sid] = params['sid']
       @user = User.find_by_cid(@cid)
 
       if !@user || @user.city.nil?   # new user
+        session[:user_state] = "session_city"
         @user = User.create!(:cid => params['cid'])
         circle = params['circle']
         cities_hash = CIRCLES_LIST[circle]
@@ -33,27 +35,30 @@ class HomeController < ApplicationController
           format.any(:xml, :html) {render :template => 'home/ask_city.xml', :layout => nil, :formats => [:xml]}
         end
       else    # old user
+        session[:user_state] = "session_cuisine"
         @play_text = "Please enter your cuisine to search for restaurants"
         respond_to do |format|
           format.any(:xml, :html) {render :template => 'home/ask_cuisine.xml', :layout => nil, :formats => [:xml]}
         end
       end
-    when params && params['event'].downcase == 'record'     # user has entered his locality/cuisine preference
-      Rails.logger.info "SESSION = #{session.inspect}"
-      text = get_text_from_record(params['data'])
-      text = get_cuisine_from_text(text, 4)
+    when params && params['event'] && params['event'].downcase == 'record'     # user has entered his locality/cuisine preference
+      if session[:user_state] == "session_locality"
+        respond_to do |format|
+          format.any(:xml, :html) {render :template => 'home/send_sms.xml', :layout => nil, :formats => [:xml]}
+        end
+      else if session[:user_state] == "session_cuisine"
+        session[:user_state] = "session_locality"    # change state to locality and get cuisine from current record
+        text = get_text_from_record(params['data'])
+        text = get_cuisine_from_text(text, 4)
 
-      session[:cuisine] = text
+        session[:cuisine] = text
 
-      hotel_details = Zomato.search_restaturants(text, 4)
-Rails.logger.info hotel_details.inspect
-      @message = get_formatted_text(hotel_details)
-      @play_text = "We will be sending you the list of restaurants through sms shortly"
+        hotel_details = Zomato.search_restaturants(text, 4)
+        @message = get_formatted_text(hotel_details)
+        @play_text = "We will be sending you the list of restaurants through sms shortly"
 
-      respond_to do |format|
-        format.any(:xml, :html) {render :template => 'home/send_sms.xml', :layout => nil, :formats => [:xml]}
       end
-    when params && params['event'].downcase == 'gotdtmf'    # user has entered his city preference
+    when params && params['event'] && params['event'].downcase == 'gotdtmf'    # user has entered his city preference
       city_code = params['data']
       city = 'bangalore'
       session[:city] = city
@@ -91,11 +96,16 @@ Rails.logger.info hotel_details.inspect
         end
       end
     end
+    return ""
   end
 
   def get_text_from_record(record)
-    `wget #{record}`
-    audio = Speech::AudioToText.new(record.split("/").last)
+    file_name = record.split("/").last
+    while !File.exists?(file_name)
+      resp = `wget #{record} | grep "200 OK"`
+      sleep 1
+    end
+    audio = Speech::AudioToText.new(file_name)
     audio.to_text
     audio.captured_json["hypotheses"].collect {|i| i[0] }
   end
