@@ -63,7 +63,7 @@ class HomeController < ApplicationController
         end
 
         Rails.logger.info "search words = #{search_keywords}"
-        hotel_details = Zomato.search_restaturants(text, session[:city_id])
+        hotel_details = Zomato.search_restaturants(search_keywords, session[:city_id], session[:cuisine_id])
         @play_text, @sms_message = get_formatted_text(hotel_details)
         # send_sms(@play_text)
 
@@ -76,12 +76,14 @@ class HomeController < ApplicationController
         #TODO: Make this async
         text = get_text_from_record(params['data'])
         puts "detected cuisines #{text.inspect}"
-        text = get_cuisine_from_text(text, session[:city_id])
+        cuisine_details = get_cuisine_from_text(text, session[:city_id])
 
-        Rails.logger.info "CUISINES = #{text}"
+        Rails.logger.info "CUISINES = #{cuisine_details.inspect}"
+        cuisine_name = cuisine_details[:cuisine_name]
+        cuisine_id = cuisine_details[:cuisine_id]
 
         # Retry one more time if cuisines is blank
-        if text == "" && session[:retry_count] == 0
+        if cuisine_name == "" && session[:retry_count] == 0
           session[:retry_count] = 1
           file_name = params['data'].split("/").last
           File.delete(file_name) rescue nil
@@ -91,7 +93,8 @@ class HomeController < ApplicationController
           end
         else
           session[:user_state] = "session_locality"    # change state to locality and get cuisine from current record
-          session[:cuisine] = text
+          session[:cuisine] = cuisine_name
+          session[:cuisine_id] = cuisine_id
           @play_text = "Please tell us your locality preference to search for restaurants after the beep"
 
           respond_to do |format|
