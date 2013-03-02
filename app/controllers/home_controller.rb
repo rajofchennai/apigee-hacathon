@@ -25,7 +25,7 @@ class HomeController < ApplicationController
             @play_text = @play_text + "press #{value} for #{key}"
           end
         else
-          @play_text = @play_text +"press 1 for delhi press 2 for kolkata
+          @play_text = @play_text + "press 1 for delhi. press 2 for kolkata.
                             press 4 for bangalore or press 7 for chennai"
         end
 
@@ -45,10 +45,24 @@ class HomeController < ApplicationController
       end
     when params && params['event'] && params['event'].downcase == 'record'     # user has entered his locality/cuisine preference
       if session[:user_state] == "session_locality"
-        @play_text = "We will be sending you the list of restaurants through sms shortly. Thank you."
-        # hotel_details = Zomato.search_restaturants(text, session[:city_id])
-        # @message = get_formatted_text(hotel_details)
-        send_sms(@play_text)
+        search_keywords = session[:cuisine]
+
+        text = get_text_from_record(params['data'])
+        text = get_location_from_text(text, session[:city_id])
+
+        search_keywords = search_keywords + text
+
+        if search_keywords == ""
+          search_keywords = "Indiranagar Mexican"
+        end
+
+        hotel_details = Zomato.search_restaturants(text, session[:city_id])
+        @play_text = get_formatted_text(hotel_details)
+        # send_sms(@play_text)
+
+        respond_to do |format|
+          format.any(:xml, :html) {render :template => 'home/play_results.xml', :layout => nil, :formats => [:xml]}
+        end
       else
         #TODO: Make this async
         text = get_text_from_record(params['data'])
@@ -158,7 +172,23 @@ class HomeController < ApplicationController
     end
   end
 
-  def get_formatted_text(json_resp)
+  def get_formatted_text(resp)
+    total_num_of_results = resp["resultsShown"]
+
+    if(total_num_of_results <=5)
+      results = resp["results"]
+    else
+      results = resp["results"][0..4]
+    end
+
+    reply_message = "You can go to "
+    results.each do |result|
+      result = result["result"]
+      reply_message = reply_message + "#{result['name']} in #{result['locality']} or"
+    end
+
+    reply_message = reply_message[0...-2]  # remove "or" from the end of sentence
+    reply_message = reply_message + ". We will be sending you all the details through sms shortly. Thank you."
   end
 
   def subsequence(s1, s2)
