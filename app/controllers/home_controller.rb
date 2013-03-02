@@ -83,7 +83,7 @@ class HomeController < ApplicationController
   def transcribe
     @sid  = params[:sid]
     @cid  = params[:cid]
-    puts params.inspect
+    render :json =>  params
   end
 
   private
