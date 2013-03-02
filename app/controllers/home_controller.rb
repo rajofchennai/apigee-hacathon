@@ -46,7 +46,7 @@ class HomeController < ApplicationController
         # hotel_details = Zomato.search_restaturants(text, 4)
         # @message = get_formatted_text(hotel_details)
         send_sms(@play_text)
-      elsif session[:user_state] == "session_cuisine"
+      else
         session[:user_state] = "session_locality"    # change state to locality and get cuisine from current record
 
         #TODO: Make this async
