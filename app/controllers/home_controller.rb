@@ -51,15 +51,15 @@ class HomeController < ApplicationController
       end
     when params && params['event'] && params['event'].downcase == 'record'     # user has entered his locality/cuisine preference
       if session[:user_state] == "session_locality"
-        search_keywords = session[:cuisine]
+        search_keywords = ""
 
         text = get_text_from_record(params['data'])
         text = get_location_from_text(text, session[:city_id])
 
-        search_keywords = search_keywords + " " + text
+        search_keywords = text
 
-        if search_keywords == " "
-          search_keywords = "Indiranagar Mexican"
+        if search_keywords == ""
+          search_keywords = "Indiranagar"
         end
 
         Rails.logger.info "search words = #{search_keywords}"
