@@ -78,6 +78,12 @@ class HomeController < ApplicationController
 
   end
 
+  def transcribe
+    @sid  = params[:sid]
+    @cid  = params[:cid]
+    puts params.inspect
+  end
+
   def test
     @cid = "9535145985"
     text = "good morning"
