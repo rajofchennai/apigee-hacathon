@@ -38,7 +38,9 @@ class HomeController < ApplicationController
         session[:user_state] = "session_cuisine"
         session[:city_id] = @user.city_id || "4"
         session[:retry_count] = 0
-        @play_text = "Please tell us your cuisine preference to search for restaurants after the beep"
+        @play_text = "Welcome to call to eat."
+        @play_text = @play_text + "Please tell us your cuisine preference
+                                   to search for restaurants after the beep"
         respond_to do |format|
           format.any(:xml, :html) {render :template => 'home/ask_cuisine.xml', :layout => nil, :formats => [:xml]}
         end
