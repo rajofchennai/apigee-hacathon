@@ -24,6 +24,7 @@ gem 'jquery-rails'
 gem "speech2text", :git => 'git://github.com/taf2/speech2text.git'
 gem "rubyfish", "~> 0.0.5"
 gem "usergrid_iron", "~> 0.9.0"
+gem 'girl_friday'
 # To use ActiveModel has_secure_password
 # gem 'bcrypt-ruby', '~> 3.0.0'
 

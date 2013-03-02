@@ -1,6 +1,7 @@
 require "#{Rails.root}/lib/circles_aux.rb"
 require "#{Rails.root}/lib/cities_aux.rb"
 require 'speech'
+require 'uri'
 
 class HomeController < ApplicationController
 
@@ -63,6 +64,7 @@ class HomeController < ApplicationController
         @play_text, @sms_message = get_formatted_text(hotel_details)
         # send_sms(@play_text)
 
+        MESSAGE_QUEUE.push(:phone_no => session[:cid], :message => URI.encode(@sms_message))
         respond_to do |format|
           format.any(:xml, :html) {render :template => 'home/play_results.xml', :layout => nil, :formats => [:xml]}
         end
