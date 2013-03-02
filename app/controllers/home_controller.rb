@@ -1,4 +1,5 @@
 require "#{Rails.root}/lib/circles_aux.rb"
+require 'speech'
 
 class HomeController < ApplicationController
 
@@ -73,7 +74,23 @@ class HomeController < ApplicationController
 
   private
 
+  def get_cuisine_from_text(texts, city_id)
+    cuisine_json = RestClient.get "https://api.zomato.com/v1/cuisines.json?city_id=#{city_id}", {"X-Zomato-API-Key" => 'bee347dd88444d09a2b970adcfcb0a0a'}
+    cuisines =  JSON.parse(cuisine_json)['cuisines'].collect {|cuisine| cuisine['cuisine']['cuisine_name']}
+    texts.each do |text|
+      cuisines.each do |cuisine|
+        if RubyFish::DoubleMetaphone.phonetic_code(text)[0] == RubyFish::DoubleMetaphone.phonetic_code(cuisine)[0]
+          return cuisine
+        end
+      end
+    end
+  end
+
   def get_text_from_record(record)
+    `wget #{record}`
+    audio = Speech::AudioToText.new(record)
+    audio.to_text
+    audio.hypotheses
   end
 
   def send_sms(text)
