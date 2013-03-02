@@ -36,27 +36,30 @@ class HomeController < ApplicationController
         end
       else    # old user
         session[:user_state] = "session_cuisine"
-        @play_text = "Please enter your cuisine to search for restaurants"
+        @play_text = "Please tell us your cuisine preference to search for restaurants"
         respond_to do |format|
           format.any(:xml, :html) {render :template => 'home/ask_cuisine.xml', :layout => nil, :formats => [:xml]}
         end
       end
     when params && params['event'] && params['event'].downcase == 'record'     # user has entered his locality/cuisine preference
       if session[:user_state] == "session_locality"
-        respond_to do |format|
-          format.any(:xml, :html) {render :template => 'home/send_sms.xml', :layout => nil, :formats => [:xml]}
-        end
-      else if session[:user_state] == "session_cuisine"
+        @play_text = "We will be sending you the list of restaurants through sms shortly"
+        # hotel_details = Zomato.search_restaturants(text, 4)
+        # @message = get_formatted_text(hotel_details)
+        send_sms(@play_text)
+      elsif session[:user_state] == "session_cuisine"
         session[:user_state] = "session_locality"    # change state to locality and get cuisine from current record
+
+        #TODO: Make this async
         text = get_text_from_record(params['data'])
         text = get_cuisine_from_text(text, 4)
 
         session[:cuisine] = text
+        @play_text = "Please tell us your locality preference to search for restaurants"
 
-        hotel_details = Zomato.search_restaturants(text, 4)
-        @message = get_formatted_text(hotel_details)
-        @play_text = "We will be sending you the list of restaurants through sms shortly"
-
+        respond_to do |format|
+          format.any(:xml, :html) {render :template => 'home/ask_locality.xml', :layout => nil, :formats => [:xml]}
+        end
       end
     when params && params['event'] && params['event'].downcase == 'gotdtmf'    # user has entered his city preference
       city_code = params['data']
@@ -82,12 +85,6 @@ class HomeController < ApplicationController
     @sid  = params[:sid]
     @cid  = params[:cid]
     puts params.inspect
-  end
-
-  def test
-    @cid = "9535145985"
-    text = "good morning"
-    send_sms(text)
   end
 
   private
@@ -117,7 +114,7 @@ class HomeController < ApplicationController
   end
 
   def send_sms(text)
-    @text = text
+    @message = text
     respond_to do |format|
       format.any(:xml, :html) {render :template => 'home/send_sms.xml', :layout => nil, :formats => [:xml]}
     end
