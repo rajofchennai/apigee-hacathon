@@ -6,7 +6,6 @@ class HomeController < ApplicationController
   def index
     @sid = params['sid']
     @cid = params['cid']
-    session[:user_state] = nil
 
     case
     # new call
