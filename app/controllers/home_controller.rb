@@ -160,7 +160,7 @@ class HomeController < ApplicationController
         end
       end
     end
-    return {:cuisine_id => "", :cuisine_name => ""}
+    return {'cuisine_id' => "", 'cuisine_name' => ""}
   end
 
   def get_location_from_text(texts, city_id)
