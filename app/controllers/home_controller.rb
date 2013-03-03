@@ -74,7 +74,7 @@ class HomeController < ApplicationController
           format.any(:xml, :html) {render :template => 'home/play_results.xml', :layout => nil, :formats => [:xml]}
         end
       else
-        if cuisine_name == "" && session[:retry_count] == 0
+        if session[:cuisine_name].nil? && session[:retry_count] == 0
           file_name = params['data'].split("/").last
           File.delete(file_name) rescue nil
         end
@@ -97,7 +97,7 @@ class HomeController < ApplicationController
           end
         else
           session[:user_state] = "session_locality"    # change state to locality and get cuisine from current record
-          session[:cuisine] = cuisine_name
+          session[:cuisine_name] = cuisine_name
           session[:cuisine_id] = cuisine_id
           Rails.logger.info "SESSION1 = #{session.inspect}"
 
@@ -109,7 +109,7 @@ class HomeController < ApplicationController
         end
       end
     when params && params['event'] && params['event'].downcase == 'gotdtmf'    # user has entered his city preference
-      if (params['data'] == "" && session[:city_retry_count] == 0) || (!session[:city_choices].include?(params['data']) && session[:city_retry_count] == 0)
+      if (params['data'] == "" && session[:city_retry_count] == 0) || (!session[:city_choices].include?(params['data'].to_i) && session[:city_retry_count] == 0)
         session[:city_retry_count] = 1
         @play_text = "Invalid city code. Please enter again."
         respond_to do |format|
