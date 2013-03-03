@@ -55,6 +55,7 @@ class HomeController < ApplicationController
 
         text = get_text_from_record(params['data'])
         text = get_location_from_text(text, session[:city_id])
+        Rails.logger.info "SESSION2 = #{session.inspect}"
 
         search_keywords = text
 
@@ -98,6 +99,8 @@ class HomeController < ApplicationController
           session[:user_state] = "session_locality"    # change state to locality and get cuisine from current record
           session[:cuisine] = cuisine_name
           session[:cuisine_id] = cuisine_id
+          Rails.logger.info "SESSION1 = #{session.inspect}"
+
           @play_text = "Please tell us your locality preference to search after the beep"
 
           respond_to do |format|
