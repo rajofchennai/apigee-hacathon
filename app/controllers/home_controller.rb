@@ -8,7 +8,6 @@ class HomeController < ApplicationController
   def index
     @sid = params['sid']
     @cid = params['cid']
-    session[:city_choices] = []
 
     case
     # new call
@@ -19,6 +18,7 @@ class HomeController < ApplicationController
       if !@user || @user.city.nil?   # new user
         session[:user_state] = "session_city"
         session[:city_retry_count] = 0
+        session[:city_choices] = []
         @user = User.create!(:cid => params['cid'])
         circle = params['circle']
         cities_hash = CIRCLES_LIST[circle]
