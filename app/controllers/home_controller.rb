@@ -8,6 +8,7 @@ class HomeController < ApplicationController
   def index
     @sid = params['sid']
     @cid = params['cid']
+    session[:city_choices] = []
 
     case
     # new call
@@ -17,7 +18,6 @@ class HomeController < ApplicationController
 
       if !@user || @user.city.nil?   # new user
         session[:user_state] = "session_city"
-        session[:city_choices] = []
         session[:city_retry_count] = 0
         @user = User.create!(:cid => params['cid'])
         circle = params['circle']
@@ -26,6 +26,7 @@ class HomeController < ApplicationController
         if(!cities_hash.blank?)
           cities_hash.each do |key, value|
             @play_text = @play_text + "press #{value} for #{key}"
+            session[:city_choices] << value
           end
         else
           @play_text = @play_text + "press 1 for delhi. press 2 for kolkata.
@@ -85,8 +86,8 @@ class HomeController < ApplicationController
         cuisine_details = get_cuisine_from_text(text, session[:city_id])
 
         Rails.logger.info "CUISINES = #{cuisine_details.inspect}"
-        cuisine_name = cuisine_details[:cuisine_name]
-        cuisine_id = cuisine_details[:cuisine_id]
+        cuisine_name = cuisine_details['cuisine_name']
+        cuisine_id = cuisine_details['cuisine_id']
 
         # Retry one more time if cuisines is blank
         if cuisine_name == "" && session[:retry_count] == 0
