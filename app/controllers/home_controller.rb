@@ -202,6 +202,11 @@ class HomeController < ApplicationController
   def get_formatted_text(resp)
     total_num_of_results = resp["resultsShown"]
 
+    if total_num_of_results == 0
+      reply_message = sms = "Sorry we could not find any restaurants of your choice."
+      return reply_message, sms
+    end
+
     if(total_num_of_results <=5)
       results = resp["results"]
     else
