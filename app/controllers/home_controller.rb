@@ -106,7 +106,7 @@ class HomeController < ApplicationController
         end
       end
     when params && params['event'] && params['event'].downcase == 'gotdtmf'    # user has entered his city preference
-      if (params['data'] == "" && session[:city_retry_count] == 0) || (!session[:city_choices].include?(parama['data'])) && session[:city_retry_count] == 0)
+      if (params['data'] == "" && session[:city_retry_count] == 0) || (!session[:city_choices].include?(params['data']) && session[:city_retry_count] == 0)
         session[:city_retry_count] = 1
         @play_text = "Invalid city code. Please enter again."
         respond_to do |format|
