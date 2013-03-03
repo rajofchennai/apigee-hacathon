@@ -44,7 +44,7 @@ class HomeController < ApplicationController
         session[:retry_count] = 0
         @play_text = "Welcome to call to eat."
         @play_text = @play_text + "Please tell us your cuisine preference
-                                   to search for restaurants after the beep"
+                                   to search after the beep"
         respond_to do |format|
           format.any(:xml, :html) {render :template => 'home/ask_cuisine.xml', :layout => nil, :formats => [:xml]}
         end
@@ -73,6 +73,11 @@ class HomeController < ApplicationController
           format.any(:xml, :html) {render :template => 'home/play_results.xml', :layout => nil, :formats => [:xml]}
         end
       else
+        if cuisine_name == "" && session[:retry_count] == 0
+          file_name = params['data'].split("/").last
+          File.delete(file_name) rescue nil
+        end
+
         #TODO: Make this async
         text = get_text_from_record(params['data'])
         puts "detected cuisines #{text.inspect}"
@@ -85,8 +90,6 @@ class HomeController < ApplicationController
         # Retry one more time if cuisines is blank
         if cuisine_name == "" && session[:retry_count] == 0
           session[:retry_count] = 1
-          file_name = params['data'].split("/").last
-          File.delete(file_name) rescue nil
           @play_text = "Sorry we were unable to detect your cuisine preference. Please try again"
           respond_to do |format|
             format.any(:xml, :html) {render :template => 'home/ask_cuisine.xml', :layout => nil, :formats => [:xml]}
@@ -95,7 +98,7 @@ class HomeController < ApplicationController
           session[:user_state] = "session_locality"    # change state to locality and get cuisine from current record
           session[:cuisine] = cuisine_name
           session[:cuisine_id] = cuisine_id
-          @play_text = "Please tell us your locality preference to search for restaurants after the beep"
+          @play_text = "Please tell us your locality preference to search after the beep"
 
           respond_to do |format|
             format.any(:xml, :html) {render :template => 'home/ask_locality.xml', :layout => nil, :formats => [:xml]}
@@ -103,14 +106,14 @@ class HomeController < ApplicationController
         end
       end
     when params && params['event'] && params['event'].downcase == 'gotdtmf'    # user has entered his city preference
-      if (params['data'] == "" || !session[:city_choices].include?(parama['data'])) && session[:city_retry_count] == 0
+      if (params['data'] == "" && session[:city_retry_count] == 0) || (!session[:city_choices].include?(parama['data'])) && session[:city_retry_count] == 0)
         session[:city_retry_count] = 1
         @play_text = "Invalid city code. Please enter again."
         respond_to do |format|
           format.any(:xml, :html) {render :template => 'home/retry_asking_city.xml', :layout => nil, :formats => [:xml]}
         end
       else
-        city_id = params['data']
+        city_id = params['data'] || "4"
         city = CITIES_AUX[city_id] || 'Bangalore'
         session[:city] = city
         session[:city_id] = city_id
@@ -119,7 +122,7 @@ class HomeController < ApplicationController
         @user.update_attributes!(:city => city, :city_id => city_id)
 
         session[:retry_count] = 0
-        @play_text = "Please tell us your cuisine preference to search for restaurants after the beep"
+        @play_text = "Please tell us your cuisine preference to search after the beep"
         respond_to do |format|
           format.any(:xml, :html) {render :template => 'home/ask_cuisine.xml', :layout => nil, :formats => [:xml]}
         end
