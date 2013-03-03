@@ -150,17 +150,19 @@ class HomeController < ApplicationController
   def get_cuisine_from_text(texts, city_id)
     cuisine_json = RestClient.get "https://api.zomato.com/v1/cuisines.json?city_id=#{city_id}", {"X-Zomato-API-Key" => 'bee347dd88444d09a2b970adcfcb0a0a'}
     cuisines =  JSON.parse(cuisine_json)['cuisines'].collect {|cuisine| cuisine['cuisine']}
+    max_length = 0
+    best_cuisine = {'cuisine_id' => "", 'cuisine_name' => ""}
     Rails.logger.info cuisines.inspect
     texts.each do |text|
       cuisines.each do |cuisine|
-        if RubyFish::DoubleMetaphone.phonetic_code(text)[0] == RubyFish::DoubleMetaphone.phonetic_code(cuisine['cuisine_name'])[0]
-          Rails.logger.info text
-          Rails.logger.info cuisine
-          return cuisine
+        length = subsequence(RubyFish::DoubleMetaphone.phonetic_code(text)[0], RubyFish::DoubleMetaphone.phonetic_code(cuisine['cuisine_name'])[0])
+        if length > max_length
+          max_length = length
+          best_cuisine = cuisine
         end
       end
     end
-    return {'cuisine_id' => "", 'cuisine_name' => ""}
+    return best_cuisine
   end
 
   def get_location_from_text(texts, city_id)
@@ -183,7 +185,7 @@ class HomeController < ApplicationController
   def get_text_from_record(record)
     file_name = record.split("/").last
     while !File.exists?(file_name)
-      resp = `wget #{record} | grep "200 OK"`
+      `wget #{record} | grep "200 OK"`
       sleep 1
     end
     audio = Speech::AudioToText.new(file_name)
