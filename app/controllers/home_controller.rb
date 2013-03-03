@@ -217,12 +217,12 @@ class HomeController < ApplicationController
     sms = ""
     results.each_with_index do |result, index|
       result = result["result"]
-      reply_message = reply_message + "#{result['name']} in #{result['locality']} or"
+      reply_message = reply_message + "#{result['name']} in #{result['locality']} or "
 
       sms = sms + "#{index+1}) #{result['name']}: #{result['address']}\n"
     end
 
-    reply_message = reply_message[0...-2]  # remove "or" from the end of sentence
+    reply_message = reply_message[0...-3]  # remove "or " from the end of sentence
     reply_message = reply_message + ". We will be sending you all the details through sms shortly. Thank you."
     return reply_message, sms
   end
